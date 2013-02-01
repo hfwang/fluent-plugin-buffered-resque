@@ -12,6 +12,7 @@ module Fluent
     config_param :queue, :string
     config_param :redis, :string, :default => nil
     config_param :worker_class_name_tag, :string, :default => 'class'
+    config_param :worker_class, :string, :default => nil
 
     def initialize
       super
@@ -24,6 +25,7 @@ module Fluent
       super
 
       @worker_class_name_tag = conf['worker_class_name_tag'] || 'class'
+      @worker_class = conf['worker_class']
       self.redis = conf['redis'] if conf['redis']
     end
 
@@ -76,11 +78,11 @@ module Fluent
       queue_name = @queue_mapped ? chunk.key : @queue
 
       chunk.msgpack_each {|tag, time, record|
-        klass = record.delete(@worker_class_name_tag)
+        klass = @worker_class || record.delete(@worker_class_name_tag)
         if klass && !klass.empty?
           enqueue(queue_name, klass, record)
         else
-          $log.error("record have not #{@worker_class_name_tag} key.")
+          $log.error("Neither worker_class param nor #{@worker_class_name_tag} record key was supplied.")
         end
       }
     end
