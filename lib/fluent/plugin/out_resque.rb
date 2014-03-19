@@ -13,6 +13,7 @@ module Fluent
     config_param :redis, :string, :default => nil
     config_param :worker_class_name_tag, :string, :default => 'class'
     config_param :worker_class, :string, :default => nil
+    config_param :bulk_queueing, :bool, :default => false
 
     def initialize
       super
@@ -77,14 +78,23 @@ module Fluent
     def write(chunk)
       queue_name = @queue_mapped ? chunk.key : @queue
 
-      chunk.msgpack_each {|tag, time, record|
-        klass = @worker_class || record.delete(@worker_class_name_tag)
-        if klass && !klass.empty?
-          enqueue(queue_name, klass, record)
-        else
-          $log.error("Neither worker_class param nor #{@worker_class_name_tag} record key was supplied.")
-        end
-      }
+      if klass = @worker_class and @bulk_queueing
+        records = []
+        chunk.msgpack_each {|tag, time, record|
+          record.delete(@worker_class_name_tag)
+          records << record
+        }
+        enqueue(queue_name, klass, records)
+      else
+        chunk.msgpack_each {|tag, time, record|
+          klass = @worker_class || record.delete(@worker_class_name_tag)
+          if klass && !klass.empty?
+            enqueue(queue_name, klass, record)
+          else
+            $log.error("Neither worker_class param nor #{@worker_class_name_tag} record key was supplied.")
+          end
+        }
+      end
     end
   end
 end

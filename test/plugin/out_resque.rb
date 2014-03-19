@@ -37,6 +37,16 @@ class ResqueOutputTest < Test::Unit::TestCase
     assert_equal true, true
   end
 
+  def test_write_with_bulk_queueing
+    d = create_driver(CONFIG + "\nworker_class WorkerTest\nbulk_queueing true")
+    time = Time.at(Time.now.to_i).utc
+    d.emit({'a' => 1, "class" => "WorkerTest"}, time)
+    d.emit({'b' => 2, "class" => "WorkerTest"}, time)
+    check_enqueue("test_queue", "WorkerTest", [{"a" => 1, "time" => time.strftime("%y-%m-%d %H:%M:%S")}, {"b" => 2, "time" => time.strftime("%y-%m-%d %H:%M:%S")}])
+    d.run
+    assert_equal true, true
+  end
+
   def test_write_except_time_key
     d = create_driver(CONFIG + "\ninclude_time_key false")
     time = Time.at(Time.now.to_i).utc
