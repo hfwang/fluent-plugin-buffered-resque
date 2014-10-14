@@ -1,7 +1,7 @@
 
 module Fluent
-  class ResqueOutput < BufferedOutput
-    Fluent::Plugin.register_output('resque', self)
+  class BufferedResqueOutput < BufferedOutput
+    Fluent::Plugin.register_output('buffered_resque', self)
 
     include SetTagKeyMixin
     config_set_default :include_tag_key, false
@@ -14,6 +14,11 @@ module Fluent
     config_param :worker_class_name_tag, :string, :default => 'class'
     config_param :worker_class, :string, :default => nil
     config_param :bulk_queueing, :bool, :default => false
+
+    # Define `log` method for v0.10.42 or earlier
+    unless method_defined?(:log)
+      define_method("log") { $log }
+    end
 
     def initialize
       super
@@ -84,14 +89,16 @@ module Fluent
           record.delete(@worker_class_name_tag)
           records << record
         }
+        log.debug("Flushing #{records.size} records to #{queue_name}:#{klass}")
         enqueue(queue_name, klass, records)
       else
         chunk.msgpack_each {|tag, time, record|
           klass = @worker_class || record.delete(@worker_class_name_tag)
           if klass && !klass.empty?
+            log.debug("Enqueuing one record to #{queue_name}:#{klass}")
             enqueue(queue_name, klass, record)
           else
-            $log.error("Neither worker_class param nor #{@worker_class_name_tag} record key was supplied.")
+            log.error("Neither worker_class param nor #{@worker_class_name_tag} record key was supplied.")
           end
         }
       end

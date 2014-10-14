@@ -2,13 +2,13 @@
 $:.push File.expand_path('../lib', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.name        = "fluent-plugin-resque"
-  gem.description = "Resque enqueue plugin"
-  gem.homepage    = "https://github.com/hotchpotch/fluent-plugin-resque"
+  gem.name        = "fluent-plugin-buffered-resque"
+  gem.description = "Resque output plugin for fluent event collector. Has extra features like buffering and setting a worker class in the config."
+  gem.homepage    = "https://github.com/hfwang/fluent-plugin-buffered-resque"
   gem.summary     = gem.description
   gem.version     = File.read("VERSION").strip
-  gem.authors     = ["Yuichi Tateno"]
-  gem.email       = "hotchpotch@gmail.com"
+  gem.authors     = ["Hsiu-Fan Wang", "Yuichi Tateno"]
+  gem.email       = "hfwang@porkbuns.net"
   gem.has_rdoc    = false
   gem.files       = `git ls-files`.split("\n")
   gem.test_files  = `git ls-files -- {test,spec,features}/*`.split("\n")
