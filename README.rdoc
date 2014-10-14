@@ -2,7 +2,7 @@
 
 = Installation
 
-  $ fluent-gem install fluent-plugin-resque
+  $ fluent-gem install fluent-plugin-buffered-resque
 
 = Usage
 
@@ -10,15 +10,15 @@
       type resque
       redis hostname:port/namespace
       queue file_serve
-      worker_class_name_tag class # default class
+      worker_class MyClass
+      bulk_queuing true
     </match>
-    
+
     fluent_logger.post('resque', {
-      :class => 'Worker::MyClass',
       :user_id => xxx,
       :body => yyy
     })
-    #=> enqueue ('file_serve', 'Worker::MyClass', {:user_id => xxx, :body => yyy})
+    #=> enqueue ('file_serve', 'MyClass', {:user_id => xxx, :body => yyy})
 
 = Copyright
 
